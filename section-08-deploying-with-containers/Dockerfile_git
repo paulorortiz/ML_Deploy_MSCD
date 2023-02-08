@@ -1,0 +1,36 @@
+FROM python:3.11
+
+# Create the user that will run the app
+RUN adduser --disabled-password --gecos '' ml-api-user
+
+#WORKDIR /opt/house-prices-api
+#ARG PIP_EXTRA_INDEX_URL
+
+# Install requirements, including from Gemfury
+#ADD ./house-prices-api /opt/house-prices-api/
+RUN pip install --upgrade pip
+RUN apt-get install -y git
+
+
+RUN mkdir /root/.ssh && chmod 0700 /root/.ssh  \
+     && ssh-keyscan -t rsa github.com >> /root/.ssh/known_hosts
+ADD ./id_rsa /root/.ssh/
+ADD  ./id_rsa.pub /root/.ssh/
+
+RUN ssh-keyscan github.com >> /root/.ssh/known_hosts
+
+RUN cd /opt
+RUN git clone git@github.com:paulorortiz/ML_Deploy_MSCD.git  /opt/ML_Deploy_MSCD
+
+RUN pip install -r /opt/ML_Deploy_MSCD/section-08-deploying-with-containers/house-prices-api/requirements.txt
+
+RUN chmod +x /opt/ML_Deploy_MSCD/section-08-deploying-with-containers/house-prices-api/run.sh
+RUN chown -R ml-api-user:ml-api-user ./
+
+WORKDIR /opt/ML_Deploy_MSCD/section-08-deploying-with-containers/house-prices-api
+
+USER ml-api-user
+
+EXPOSE 8001
+
+CMD ["bash", "./run.sh"]
