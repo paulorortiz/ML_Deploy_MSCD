@@ -1,0 +1,29 @@
+pipeline{
+    agent any
+    
+    stages{
+        stage('Checkout...'){
+            steps{
+                echo "Checkout code..."
+            }
+        }
+        
+        stage('Build'){
+            steps{
+                echo "Building the code ..."
+            }
+        }
+        
+        stage('Deploying'){
+            steps{
+                echo "Deploying to test env..."
+            }
+        }
+
+        stage('Deploying to prod'){
+            steps{
+                echo "Deploying to prod env..."
+            }
+        }
+    }
+}
