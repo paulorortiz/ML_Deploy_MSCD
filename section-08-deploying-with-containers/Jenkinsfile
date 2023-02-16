@@ -26,8 +26,8 @@ pipeline {
         stage('Pruebas unitarias') {
             steps {
                 script {
-                    dir("${env.WORKSPACE}section-05-production-model-package") {
-                        sh "/usr/bin/tox -c ${env.WORKSPACE}section-05-production-model-package/tox.ini"
+                    dir("${env.WORKSPACE}/section-05-production-model-package") {
+                        sh "/usr/bin/tox -c ${env.WORKSPACE}/section-05-production-model-package/tox.ini"
                     }
                 }
             }
