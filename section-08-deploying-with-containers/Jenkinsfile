@@ -1,29 +1,89 @@
-pipeline{
+
+
+
+pipeline {
     agent any
-    
-    stages{
-        stage('Checkout...'){
-            steps{
-                echo "Checkout code..."
+
+    stages {
+              
+        stage('Iniciando pipeline Modelo Machine Learning') {
+            steps {
+                script {
+                    echo "Modulo 16 SOE"
+                    echo "Ejecutando en: ${env.WORKSPACE}"
+                }
             }
         }
         
-        stage('Build'){
-            steps{
-                echo "Building the code ..."
+        stage('Instalando pre-requisitos') {
+            steps {
+                script {
+                    def dirpath = ${env.WORKSPACE}
+                    dir("${dirpath}/section-05-production-model-package/requirements") {
+                        sh "/usr/bin/pip install -r ./requirements.txt"
+                        sh "/usr/bin/pip install -r ./test_requirements.txt"
+                    }
+                }
             }
         }
         
-        stage('Deploying'){
-            steps{
-                echo "Deploying to test env..."
+        stage('Pruebas unitarias') {
+            steps {
+                script {
+                    def dirpath = ${env.WORKSPACE}
+                    dir("${dirpath}section-05-production-model-package") {
+                        sh "/usr/bin/tox -c ${dirpath}section-05-production-model-package/tox.ini"
+                    }
+                }
             }
         }
 
-        stage('Deploying to prod'){
-            steps{
-                echo "Deploying to prod env..."
+        stage('Comprimiendo proyecto') {
+            steps {
+                script {
+                    def dirpath = ${env.WORKSPACE}
+                    dir("${dirpath}") {
+                        sh "rm -fr modelo.tgz"
+                        sh "rm -fr to_deploy"
+                        sh "mkdir to_deploy"
+                        sh "cp -pr  section-05-production-model-package to_deploy"
+                        sh "cp -pr  section-08-deploying-with-containers to_deploy"
+                        sh "rm -fr  to_deploy/section-05-production-model-package/.tox"
+                        sh "tar cvzf to_deploy/modelo.tgz to_deploy/*"
+                    }
+                }
             }
         }
+        
+        stage('Borrando versión previa') {
+            steps {
+               sh "ssh -i '/var/jenkins_home/llaves_aws.pem' ubuntu@ec2-44-202-220-76.compute-1.amazonaws.com 'sh /home/ubuntu/bajar.sh'"
+            }    
+        }
+        
+        stage('LLevando a servidor') {
+            steps {
+                script {
+                    def dirpath = ${env.WORKSPACE}
+                    dir("${dirpath}") {
+                        sh "scp -i /var/jenkins_home/llaves_aws.pem to_deploy/modelo.tgz ubuntu@ec2-44-202-220-76.compute-1.amazonaws.com:/home/ubuntu/modelo"
+                    }
+                }
+            }
+        }
+        
+        stage('Instalando') {
+            steps {
+               sh "ssh -i '/var/jenkins_home/llaves_aws.pem' ubuntu@ec2-44-202-220-76.compute-1.amazonaws.com 'sh /home/ubuntu/instalar.sh &'"
+            }
+        }
+        
+        stage('Health') {
+            steps {
+               sh "sleep 5s"
+               sh "curl \"http://ec2-44-202-220-76.compute-1.amazonaws.com:8010/api/v1/health\" "
+            }
+        }             
+        
     }
 }
