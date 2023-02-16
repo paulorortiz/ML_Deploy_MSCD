@@ -1,6 +1,3 @@
-
-
-
 pipeline {
     agent any
 
@@ -18,8 +15,7 @@ pipeline {
         stage('Instalando pre-requisitos') {
             steps {
                 script {
-                    def dirpath = ${env.WORKSPACE}
-                    dir("${dirpath}/section-05-production-model-package/requirements") {
+                    dir("${env.WORKSPACE}/section-05-production-model-package/requirements") {
                         sh "/usr/bin/pip install -r ./requirements.txt"
                         sh "/usr/bin/pip install -r ./test_requirements.txt"
                     }
@@ -30,9 +26,8 @@ pipeline {
         stage('Pruebas unitarias') {
             steps {
                 script {
-                    def dirpath = ${env.WORKSPACE}
-                    dir("${dirpath}section-05-production-model-package") {
-                        sh "/usr/bin/tox -c ${dirpath}section-05-production-model-package/tox.ini"
+                    dir("${env.WORKSPACE}section-05-production-model-package") {
+                        sh "/usr/bin/tox -c ${env.WORKSPACE}section-05-production-model-package/tox.ini"
                     }
                 }
             }
@@ -41,8 +36,7 @@ pipeline {
         stage('Comprimiendo proyecto') {
             steps {
                 script {
-                    def dirpath = ${env.WORKSPACE}
-                    dir("${dirpath}") {
+                    dir("${env.WORKSPACE}") {
                         sh "rm -fr modelo.tgz"
                         sh "rm -fr to_deploy"
                         sh "mkdir to_deploy"
@@ -64,8 +58,7 @@ pipeline {
         stage('LLevando a servidor') {
             steps {
                 script {
-                    def dirpath = ${env.WORKSPACE}
-                    dir("${dirpath}") {
+                    dir("${env.WORKSPACE}") {
                         sh "scp -i /var/jenkins_home/llaves_aws.pem to_deploy/modelo.tgz ubuntu@ec2-44-202-220-76.compute-1.amazonaws.com:/home/ubuntu/modelo"
                     }
                 }
